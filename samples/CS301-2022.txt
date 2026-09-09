@@ -1,0 +1,13 @@
+University of TechCity
+Semester Examination — Data Structures (CS301)
+Time: 3 Hours    Max Marks: 100
+Answer any FIVE questions.
+
+Q1. Explain the concept of a stack. Write algorithms for push and pop operations. How is a stack implemented using an array?
+Q2. What is a queue? Differentiate between a simple queue and a circular queue. Give the operations involved.
+Q3. Write an algorithm for binary search. What is the time complexity of binary search in the best, average and worst case?
+Q4. Define a binary search tree. Write the algorithm to insert a node and to search for a node in a BST.
+Q5. Explain depth first search (DFS) and breadth first search (BFS) graph traversal techniques with examples.
+Q6. What are the different ways to represent a graph? Explain adjacency matrix and adjacency list with suitable examples.
+Q7. Write the algorithm for in-order, pre-order and post-order tree traversals. Explain with an example tree.
+Q8. Explain the concept of recursion with the help of the factorial example. Discuss its advantages and limitations.

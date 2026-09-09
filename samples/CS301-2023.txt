@@ -1,0 +1,13 @@
+University of TechCity
+Semester Examination — Data Structures (CS301)
+Time: 3 Hours    Max Marks: 100
+Answer any FIVE questions.
+
+1) Discuss the operations of a stack data structure. Show how the push and pop routines are written and how overflow and underflow are handled.
+2) Compare simple queue, circular queue and deque. State where each is used in practice.
+3) Implement binary search using an iterative approach. Analyze its running time and space complexity.
+4) Construct a binary search tree for the keys 50, 30, 70, 20, 40, 60, 80. Show the insertion steps.
+5) Explain graph traversal methods BFS and DFS. Which data structures are used in each traversal?
+6) Compare adjacency matrix and adjacency list representations of graphs. When is one preferred over the other?
+7) Give recursive definitions for in-order and pre-order traversal of binary trees, and trace them on a sample tree.
+8) Write a recursive function to compute factorial. Show the recursion tree and explain how stack frames work during recursion.

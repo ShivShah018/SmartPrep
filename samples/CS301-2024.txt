@@ -1,0 +1,13 @@
+University of TechCity
+Semester Examination — Data Structures (CS301)
+Time: 3 Hours    Max Marks: 100
+Answer any FIVE questions.
+
+Question 1: What is a stack? Outline the primary operations and applications of stacks in expression evaluation.
+Question 2: Define queue. Describe a circular queue and the way to check whether it is full or empty.
+Question 3: Write pseudocode for binary search and apply it to locate an element in a sorted array.
+Question 4: Explain the properties of a binary search tree. Write code for insertion and deletion of a node.
+Question 5: Explain breadth-first search with an example and mention a real world application such as shortest path in unweighted graphs.
+Question 6: Describe graph representation using adjacency list and adjacency matrix, giving the memory trade-offs.
+Question 7: Compare in-order, pre-order and post-order tree traversals and state the order in which nodes are visited for a given binary tree.
+Question 8: Show the factorial of a number using recursion and describe the role of the system stack.

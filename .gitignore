@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment files and secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# Production builds / dist
+frontend/dist/
+dist/
+build/
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# Temporary and Upload directories
+server/uploads/
+uploads/
+temp/
