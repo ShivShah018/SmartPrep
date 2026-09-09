@@ -14,7 +14,7 @@ export async function extractTextWithPages({ originalname, buffer }) {
   try {
     switch (ext) {
       case 'pdf':
-        return await extractPdfWithPages(buffer);
+        return await extractPdfWithPages(buffer, originalname);
       case 'docx': {
         const text = await extractDocx(buffer);
         return [{ pageNumber: 1, text: text.trim() }];

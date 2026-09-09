@@ -18,12 +18,12 @@ interface Props {
 }
 
 const ANALYSIS_STATUS_STEPS = [
-  'Reading your academic documents...',
-  'Extracting syllabus units & question blocks...',
-  'Cross-referencing syllabus topics against PYQ frequency...',
+  'Reading your material...',
+  'Processing pages...',
+  'Understanding handwritten notes & syllabus units...',
+  'Cross-referencing topics against past exam frequency...',
   'Checking lecture notes coverage...',
-  'Calculating year trends & priority rankings...',
-  'Preparing your comprehensive analysis...',
+  'Preparing your course analysis...',
 ];
 
 export default function UploadView({ phase, error, onAnalyze, onReset }: Props) {
