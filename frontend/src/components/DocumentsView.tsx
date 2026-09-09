@@ -44,12 +44,12 @@ export default function DocumentsView({ documents, onUpload, onDelete }: Documen
   return (
     <div className="documents-view">
       <div className="view-header">
-        <h1>Document Index & Vector Store</h1>
-        <p>Upload your syllabus, lecture notes, textbooks, or past papers for grounded RAG query analysis.</p>
+        <h1>Study Materials</h1>
+        <p>Upload your syllabus, past papers, notes, or textbooks to build your personal study workspace.</p>
       </div>
 
-      <div className="upload-card">
-        <h3>Upload Academic Material</h3>
+      <div className="upload-card card">
+        <h3>Add Study Material</h3>
         <p className="upload-subtitle">Supports PDF, DOCX, TXT, and Markdown files up to 25MB.</p>
 
         <form onSubmit={handleUploadSubmit} className="upload-form">
@@ -67,7 +67,7 @@ export default function DocumentsView({ documents, onUpload, onDelete }: Documen
               <span className="drop-text">
                 {selectedFiles.length > 0
                   ? `${selectedFiles.length} file(s) selected`
-                  : 'Click to select or drag & drop academic documents here'}
+                  : 'Drag & drop files here or click to browse'}
               </span>
             </label>
           </div>
@@ -87,40 +87,42 @@ export default function DocumentsView({ documents, onUpload, onDelete }: Documen
 
           <button
             type="submit"
-            className="submit-btn"
+            className="submit-btn btn btn-primary"
             disabled={selectedFiles.length === 0 || isUploading}
           >
-            {isUploading ? 'Extracting Text, Page Chunking & Generating Vector Embeddings...' : 'Process & Index Documents'}
+            {isUploading ? 'Preparing your study materials...' : 'Add Materials'}
           </button>
         </form>
       </div>
 
       <div className="indexed-docs-section">
-        <h3>Indexed Materials ({documents.length})</h3>
+        <h3>Your Study Library ({documents.length})</h3>
 
         {documents.length === 0 ? (
-          <div className="empty-docs-card">
-            <div className="empty-icon">📚</div>
-            <h4>No Academic Documents Indexed Yet</h4>
-            <p>Upload syllabus PDFs or study notes above to start grounded chat and document analysis.</p>
+          <div className="empty-docs-card card" style={{ textAlign: 'center', padding: '36px 20px' }}>
+            <div className="empty-icon" style={{ fontSize: '36px', marginBottom: '8px' }}>📚</div>
+            <h4 style={{ margin: '0 0 4px 0' }}>Your study library is empty</h4>
+            <p style={{ color: 'var(--text-muted)', fontSize: '13.5px', margin: 0 }}>
+              Upload your syllabus, past papers or notes above to build your study workspace.
+            </p>
           </div>
         ) : (
           <div className="docs-grid">
             {documents.map((doc) => (
-              <div key={doc.id} className="doc-card">
+              <div key={doc.id} className="doc-card card">
                 <div className="doc-icon">📄</div>
                 <div className="doc-info">
                   <h4 className="doc-name" title={doc.originalName}>
                     {doc.originalName}
                   </h4>
                   <div className="doc-meta">
-                    <span>{doc.totalPages} Page(s)</span> • <span>{doc.totalChunks} Vector Chunks</span> • <span>{formatFileSize(doc.fileSize)}</span>
+                    <span>{doc.totalPages} Page(s)</span> • <span style={{ color: 'var(--primary)', fontWeight: 600 }}>✓ Ready to use</span> • <span>{formatFileSize(doc.fileSize)}</span>
                   </div>
                 </div>
                 <button
                   className="doc-delete-btn"
                   onClick={() => onDelete(doc.id)}
-                  title="Remove from vector index"
+                  title="Remove material"
                 >
                   🗑️
                 </button>

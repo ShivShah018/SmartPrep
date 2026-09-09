@@ -81,29 +81,12 @@ export default function UploadView({ phase, error, onAnalyze, onReset }: Props) 
   return (
     <main className="upload-view">
       <div className="upload-header">
-        <h2>Upload Academic Material for Intelligence & Exam Analysis</h2>
-        <p>Combine your Syllabus, Past Question Papers (PYQs), and Lecture Notes to generate evidence-backed study priority roadmaps.</p>
+        <h2>Build Your Study Workspace</h2>
+        <p>Add the materials SmartPrep will use to understand your course.</p>
       </div>
 
       <div className="upload-dropzones-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-        {/* PYQs Dropzone */}
-        <section className={`dropzone ${busy ? 'busy' : ''}`} onClick={() => !busy && pyqInputRef.current?.click()}>
-          <input
-            ref={pyqInputRef}
-            type="file"
-            accept={ACCEPTED}
-            multiple
-            hidden
-            disabled={busy}
-            onChange={(e) => { handleAddPyqs(e.target.files); e.target.value = ''; }}
-          />
-          <div className="dropzone-icon">📝</div>
-          <h3>Past Exam Papers (PYQs)</h3>
-          <p>Upload 1 or more previous question papers ({pyqFiles.length} selected)</p>
-          <button type="button" className="btn btn-secondary" disabled={busy}>Select PYQs</button>
-        </section>
-
-        {/* Syllabus Dropzone */}
+        {/* Syllabus Category */}
         <section className={`dropzone ${busy ? 'busy' : ''}`} onClick={() => !busy && syllabusInputRef.current?.click()}>
           <input
             ref={syllabusInputRef}
@@ -115,12 +98,29 @@ export default function UploadView({ phase, error, onAnalyze, onReset }: Props) 
             onChange={(e) => { handleAddSyllabus(e.target.files); e.target.value = ''; }}
           />
           <div className="dropzone-icon">📚</div>
-          <h3>Syllabus Document</h3>
-          <p>Upload curriculum syllabus or module structure ({syllabusFiles.length} selected)</p>
-          <button type="button" className="btn btn-secondary" disabled={busy}>Select Syllabus</button>
+          <h3>SYLLABUS</h3>
+          <p>Course structure, units and topics ({syllabusFiles.length} selected)</p>
+          <button type="button" className="btn btn-secondary" disabled={busy}>Browse files</button>
         </section>
 
-        {/* Lecture Notes Dropzone */}
+        {/* Past Year Questions Category */}
+        <section className={`dropzone ${busy ? 'busy' : ''}`} onClick={() => !busy && pyqInputRef.current?.click()}>
+          <input
+            ref={pyqInputRef}
+            type="file"
+            accept={ACCEPTED}
+            multiple
+            hidden
+            disabled={busy}
+            onChange={(e) => { handleAddPyqs(e.target.files); e.target.value = ''; }}
+          />
+          <div className="dropzone-icon">📝</div>
+          <h3>PAST YEAR QUESTIONS</h3>
+          <p>Previous exam papers and question banks ({pyqFiles.length} selected)</p>
+          <button type="button" className="btn btn-secondary" disabled={busy}>Browse files</button>
+        </section>
+
+        {/* Notes & Textbooks Category */}
         <section className={`dropzone ${busy ? 'busy' : ''}`} onClick={() => !busy && notesInputRef.current?.click()}>
           <input
             ref={notesInputRef}
@@ -132,9 +132,9 @@ export default function UploadView({ phase, error, onAnalyze, onReset }: Props) 
             onChange={(e) => { handleAddNotes(e.target.files); e.target.value = ''; }}
           />
           <div className="dropzone-icon">📖</div>
-          <h3>Lecture Notes / Textbooks</h3>
-          <p>Upload study notes for cross-document coverage checking ({notesFiles.length} selected)</p>
-          <button type="button" className="btn btn-secondary" disabled={busy}>Select Notes</button>
+          <h3>NOTES & TEXTBOOKS</h3>
+          <p>Lecture notes and study material ({notesFiles.length} selected)</p>
+          <button type="button" className="btn btn-secondary" disabled={busy}>Browse files</button>
         </section>
       </div>
 
@@ -149,23 +149,25 @@ export default function UploadView({ phase, error, onAnalyze, onReset }: Props) 
             )}
           </div>
           <ul>
-            {pyqFiles.map((f, i) => (
-              <li key={`pyq-${f.name}-${i}`}>
-                <span className="file-badge" style={{ background: '#3b82f6', color: '#fff' }}>PYQ</span>
-                <span className="file-name">{f.name}</span>
-                <span className="file-size">{(f.size / 1024).toFixed(1)} KB</span>
-                {!busy && (
-                  <button type="button" className="file-remove" onClick={() => setPyqFiles(prev => prev.filter((_, idx) => idx !== i))}>×</button>
-                )}
-              </li>
-            ))}
             {syllabusFiles.map((f, i) => (
               <li key={`syl-${f.name}-${i}`}>
                 <span className="file-badge" style={{ background: '#10b981', color: '#fff' }}>SYLLABUS</span>
                 <span className="file-name">{f.name}</span>
+                <span className="file-size" style={{ color: 'var(--primary)', fontWeight: 600 }}>✓ Ready</span>
                 <span className="file-size">{(f.size / 1024).toFixed(1)} KB</span>
                 {!busy && (
                   <button type="button" className="file-remove" onClick={() => setSyllabusFiles(prev => prev.filter((_, idx) => idx !== i))}>×</button>
+                )}
+              </li>
+            ))}
+            {pyqFiles.map((f, i) => (
+              <li key={`pyq-${f.name}-${i}`}>
+                <span className="file-badge" style={{ background: '#3b82f6', color: '#fff' }}>PYQ</span>
+                <span className="file-name">{f.name}</span>
+                <span className="file-size" style={{ color: 'var(--primary)', fontWeight: 600 }}>✓ Ready</span>
+                <span className="file-size">{(f.size / 1024).toFixed(1)} KB</span>
+                {!busy && (
+                  <button type="button" className="file-remove" onClick={() => setPyqFiles(prev => prev.filter((_, idx) => idx !== i))}>×</button>
                 )}
               </li>
             ))}
@@ -173,6 +175,7 @@ export default function UploadView({ phase, error, onAnalyze, onReset }: Props) 
               <li key={`notes-${f.name}-${i}`}>
                 <span className="file-badge" style={{ background: '#8b5cf6', color: '#fff' }}>NOTES</span>
                 <span className="file-name">{f.name}</span>
+                <span className="file-size" style={{ color: 'var(--primary)', fontWeight: 600 }}>✓ Ready</span>
                 <span className="file-size">{(f.size / 1024).toFixed(1)} KB</span>
                 {!busy && (
                   <button type="button" className="file-remove" onClick={() => setNotesFiles(prev => prev.filter((_, idx) => idx !== i))}>×</button>
@@ -222,10 +225,13 @@ export default function UploadView({ phase, error, onAnalyze, onReset }: Props) 
       )}
 
       {!busy && phase !== 'error' && (
-        <div className="actions">
+        <div className="actions" style={{ flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
           <button type="button" className="btn btn-primary btn-large" disabled={!canSubmit} onClick={handleStartAnalysis}>
-            Run Phase 2 Analysis
+            Analyze My Course
           </button>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+            Connect your syllabus, past papers and notes to understand course structure, topic trends and study gaps.
+          </span>
         </div>
       )}
 

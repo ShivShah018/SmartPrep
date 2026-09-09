@@ -15,8 +15,8 @@ export default function CoverageSection({ papers }: Props) {
   return (
     <section className="section">
       <div className="section-head">
-        <h3>Paper Coverage</h3>
-        <p>Which questions were detected in each uploaded paper (used as the source for analysis).</p>
+        <h3>📄 Uploaded Papers & Questions</h3>
+        <p>Questions extracted from your uploaded exam papers used in your course analysis.</p>
       </div>
       <div className="coverage-list">
         {ok.map((paper) => {

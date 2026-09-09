@@ -46,9 +46,9 @@ export default function ChatView({ messages, onSendMessage, isLoading, documents
     <div className="chat-view">
       <div className="chat-header">
         <div className="chat-title-group">
-          <h2>Academic AI Tutor & RAG Assistant</h2>
+          <h2>AI Study Assistant</h2>
           <span className="doc-count-badge">
-            ⚡ {documents.length} Document(s) Indexed
+            📚 {documents.length} Material(s) Available
           </span>
         </div>
 
@@ -57,9 +57,9 @@ export default function ChatView({ messages, onSendMessage, isLoading, documents
             type="button"
             className={`mode-btn ${mode === 'rag' ? 'active' : ''}`}
             onClick={() => setMode('rag')}
-            title="Search uploaded academic documents for grounded responses"
+            title="Search your uploaded study materials for answers"
           >
-            <span className="mode-icon">📄</span> Answer from My Documents
+            <span className="mode-icon">📚</span> Answer from Study Materials
           </button>
           <button
             type="button"
@@ -67,14 +67,14 @@ export default function ChatView({ messages, onSendMessage, isLoading, documents
             onClick={() => setMode('general')}
             title="General academic knowledge model"
           >
-            <span className="mode-icon">🌐</span> General AI Answer
+            <span className="mode-icon">💡</span> General AI Answer
           </button>
         </div>
       </div>
 
       {mode === 'rag' && documents.length === 0 && (
         <div className="no-docs-warning">
-          ℹ️ No documents are indexed yet. Upload notes or past papers in the <strong>Documents & Index</strong> tab for grounded source citations.
+          ℹ️ No materials uploaded yet. Add notes, syllabus, or past papers in the <strong>Study Materials</strong> page to ask questions based on your course.
         </div>
       )}
 

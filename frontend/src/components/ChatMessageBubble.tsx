@@ -9,10 +9,10 @@ interface ChatMessageBubbleProps {
 }
 
 const RAG_STATUS_STEPS = [
-  'Reading your query...',
-  'Searching your documents...',
-  'Retrieving relevant sections...',
-  'Generating grounded answer...',
+  'Reading your question...',
+  'Searching your study materials...',
+  'Finding relevant sections...',
+  'Preparing your answer...',
 ];
 
 const GENERAL_STATUS_STEPS = [
@@ -32,7 +32,7 @@ export default function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
   return (
     <div className={`message-wrapper ${message.sender}`}>
       <div className="message-avatar">
-        {isUser ? '👤' : '⚡'}
+        {isUser ? '👤' : '🎓'}
       </div>
 
       <div className="message-content">
@@ -42,7 +42,7 @@ export default function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
           </span>
           {!isUser && (
             <span className={`mode-pill ${message.mode}`}>
-              {message.mode === 'rag' ? '📄 Grounded Answer' : '🌐 General AI Answer'}
+              {message.mode === 'rag' ? '📚 Based on your study materials' : '💡 AI Answer'}
             </span>
           )}
         </div>
@@ -63,7 +63,7 @@ export default function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
         {!isUser && !isProcessing && message.sources && message.sources.length > 0 && (
           <div className="sources-container">
             <div className="sources-title">
-              <span>📄 Grounded Sources ({message.sources.length}):</span>
+              <span>📚 Sources:</span>
             </div>
 
             <div className="sources-grid">
@@ -84,7 +84,6 @@ export default function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
 
                     <div className="source-meta">
                       <span className="source-page">Page {src.pageNumber}</span>
-                      <span className="source-score">Relevance {Math.round(src.score * 100)}%</span>
                     </div>
 
                     <div className="source-excerpt">

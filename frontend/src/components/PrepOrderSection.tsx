@@ -12,8 +12,8 @@ export default function PrepOrderSection({ order }: Props) {
   return (
     <section className="section">
       <div className="section-head">
-        <h3>Recommended Preparation Order</h3>
-        <p>Topics ranked from highest to lowest priority — study first what appears most across papers.</p>
+        <h3>🎯 Suggested Learning Order</h3>
+        <p>Topics ranked to maximize study efficiency based on syllabus dependencies and past paper frequency.</p>
       </div>
       <ol className="prep-order">
         {order.map((item) => (

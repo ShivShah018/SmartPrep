@@ -25,10 +25,10 @@ export default function Sidebar({
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <div className="brand-logo">⚡</div>
+        <div className="brand-logo">🎓</div>
         <div className="brand-text">
           <h2>SmartPrep</h2>
-          <span>Academic AI Analyst</span>
+          <span>AI Study Assistant</span>
         </div>
       </div>
 
@@ -42,7 +42,7 @@ export default function Sidebar({
           onClick={() => onSelectTab('chat')}
         >
           <span className="nav-icon">💬</span>
-          <span className="nav-label">AI Chat & RAG</span>
+          <span className="nav-label">AI Study Assistant</span>
         </button>
 
         <button
@@ -50,7 +50,7 @@ export default function Sidebar({
           onClick={() => onSelectTab('documents')}
         >
           <span className="nav-icon">📚</span>
-          <span className="nav-label">Documents & Index</span>
+          <span className="nav-label">Study Materials</span>
           {documents.length > 0 && (
             <span className="nav-badge">{documents.length}</span>
           )}
@@ -61,7 +61,7 @@ export default function Sidebar({
           onClick={() => onSelectTab('analysis')}
         >
           <span className="nav-icon">📊</span>
-          <span className="nav-label">Past Paper Analysis</span>
+          <span className="nav-label">Course Analysis</span>
         </button>
       </nav>
 
@@ -99,7 +99,7 @@ export default function Sidebar({
       <div className="sidebar-footer">
         <div className="system-status">
           <span className="status-dot"></span>
-          <span>RAG Pipeline Active</span>
+          <span>{documents.length > 0 ? 'Study workspace ready' : 'Ready to add materials'}</span>
         </div>
       </div>
     </aside>

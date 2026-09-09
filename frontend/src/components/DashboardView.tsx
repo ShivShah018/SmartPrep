@@ -17,9 +17,9 @@ export default function DashboardView({ result, onReset }: Props) {
   return (
     <main className="dashboard">
       <div className="dashboard-toolbar">
-        <h2>Academic Preparation & Intelligence Dashboard</h2>
+        <h2>Course Analysis</h2>
         <button type="button" className="btn btn-ghost" onClick={onReset}>
-          Analyze new material
+          Re-analyze course
         </button>
       </div>
 

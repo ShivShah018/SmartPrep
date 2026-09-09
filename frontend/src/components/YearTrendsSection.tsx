@@ -11,8 +11,8 @@ export default function YearTrendsSection({ trends = [], questionTypes = [] }: P
   return (
     <section className="section">
       <div className="section-head">
-        <h3>📈 Exam Trends & Question Types</h3>
-        <p>Year-over-year topic appearance frequency and exam question type breakdown based on extracted PYQ data.</p>
+        <h3>📈 Past Paper Trends</h3>
+        <p>Topic appearance frequency and question type breakdown derived from your past year exam papers.</p>
       </div>
 
       <div className="trends-grid">
@@ -20,19 +20,22 @@ export default function YearTrendsSection({ trends = [], questionTypes = [] }: P
           <div className="card question-types-card">
             <h4>Question Type Breakdown</h4>
             <div className="type-pills">
-              {questionTypes.map((qt) => (
-                <div key={qt.type} className="type-stat">
-                  <span className="type-name">{qt.type.toUpperCase()}</span>
-                  <span className="type-count">{qt.count} questions ({qt.percentage.toFixed(1)}%)</span>
-                </div>
-              ))}
+              {questionTypes.map((qt) => {
+                const label = qt.type.charAt(0).toUpperCase() + qt.type.slice(1).toLowerCase();
+                return (
+                  <div key={qt.type} className="type-stat">
+                    <span className="type-name">{label}</span>
+                    <span className="type-count">{qt.count} questions ({qt.percentage.toFixed(1)}%)</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
 
         {trends.length > 0 && (
           <div className="card year-table-card">
-            <h4>Year-by-Year Frequency Matrix</h4>
+            <h4>Year-by-Year Frequency</h4>
             <div className="table-responsive">
               <table className="trends-table">
                 <thead>

@@ -11,8 +11,8 @@ export default function SyllabusSection({ units = [], prerequisites = [] }: Prop
   return (
     <section className="section">
       <div className="section-head">
-        <h3>📚 Syllabus Structure & Prerequisites</h3>
-        <p>Curriculum units, topic breakdowns, and conceptual prerequisites extracted from syllabus documents.</p>
+        <h3>📚 Course Structure</h3>
+        <p>Curriculum units, topic breakdowns, and prerequisite concepts derived from your syllabus.</p>
       </div>
 
       {units.length > 0 && (
@@ -25,7 +25,7 @@ export default function SyllabusSection({ units = [], prerequisites = [] }: Prop
                 {unit.weightage ? (
                   <span className="weightage-pill">{unit.weightage}</span>
                 ) : (
-                  <span className="weightage-pill neutral">Weightage: Not specified</span>
+                  <span className="weightage-pill neutral">Weightage not specified</span>
                 )}
               </div>
               <div className="syllabus-topics-list">
@@ -43,7 +43,7 @@ export default function SyllabusSection({ units = [], prerequisites = [] }: Prop
 
       {prerequisites.length > 0 && (
         <div className="prerequisites-container card" style={{ marginTop: '1.5rem' }}>
-          <h4>Recommended Learning Dependencies (Prerequisites)</h4>
+          <h4>Topic Prerequisites</h4>
           <ul className="prereq-list">
             {prerequisites.map((p, idx) => (
               <li key={idx} className="prereq-item">

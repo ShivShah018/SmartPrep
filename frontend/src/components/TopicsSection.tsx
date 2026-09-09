@@ -11,8 +11,8 @@ export default function TopicsSection({ topics }: Props) {
   return (
     <section className="section">
       <div className="section-head">
-        <h3>High-Yield Topics</h3>
-        <p>Concepts that recur across your uploaded papers.</p>
+        <h3>🔥 Key Topics & Priority</h3>
+        <p>Concepts that recur across your course materials and past papers.</p>
       </div>
       <div className="topic-grid">
         {topics.map((topic) => {
