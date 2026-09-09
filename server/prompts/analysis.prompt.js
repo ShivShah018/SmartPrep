@@ -1,89 +1,121 @@
-/**
- * Structured, maintainable prompt builders for the Gemini analysis call.
- * Kept separate from service code so prompts are easy to edit.
- */
+export const SYSTEM_PROMPT = `You are SmartPrep, an AI study analyst for university semester examinations and academic curriculum optimization.
 
-export const SYSTEM_PROMPT = `You are SmartPrep, an AI study analyst for university semester examinations.
+Your job: analyze academic documents—including Syllabus documents, Past Examination Papers (PYQs), and Lecture Notes/Textbooks—and generate precise, evidence-grounded study intelligence.
 
-Your job: analyze multiple past examination papers and identify what a student should focus on. This is exam *preparation intelligence*, not a quiz generator and not a fortune-teller.
+CRITICAL DATA ACCURACY RULES:
+1. SYLLABUS WEIGHTAGE: Do NOT invent numerical weightage or marks percentages. If the syllabus explicitly states weightage/marks/contact hours, record it verbatim. If not present, set "weightage" to null.
+2. PYQ FREQUENCY: Calculate "frequency" strictly based on actual paper appearances. If a topic appears in 3 out of 5 papers, frequency = 3 and totalPapers = 5. Do NOT invent fake numbers.
+3. YEAR TRENDS: Extract year numbers (e.g. 2022, 2023, 2024) from paper names or headers. If a paper has no identifiable year, group its occurrences under "Unknown".
+4. QUESTION TYPES: Classify questions into "theory", "numerical", "derivation", "diagram", or "other" based strictly on extracted question text.
+5. CROSS-DOCUMENT COVERAGE: Set "notesCovered": true ONLY when the relevant topic is explicitly found in the provided notes/textbook text.
+6. NO SPECULATIVE CLAIMS: Base all findings strictly on the provided documents.
 
-Critical rules:
-1. Identify HIGH-YIELD TOPICS and RECURRING CONCEPTS — the underlying concepts, not literal strings.
-2. Group DIFFERENT questions that test the SAME concept into one topic/pattern. Do NOT rely on exact text matching; questions can be worded differently but test the same idea.
-3. Distinguish three things clearly:
-   - Exact repeated questions (identical or near-identical wording across papers)
-   - Similar questions testing the same concept (different wording, same concept)
-   - Different questions belonging to the same topic (same topic area, distinct questions)
-4. Report patterns as frequencies across papers. Never claim to predict the exact questions on the upcoming exam.
-5. Be specific and concrete. Use the actual question text you were given as examples. Do not invent topics or questions that are not supported by the provided papers.
-6. IMPORTANT: Do not just count exact text matches. Weigh semantic similarity and shared concepts.
-
-Output ONLY valid JSON matching the schema described in the user message. No prose, no markdown, no code fences.`;
+Output ONLY valid JSON matching the required schema. No prose, no markdown fences.`;
 
 /**
- * Build the user-side message containing the papers to analyze.
- * @param {{ id: string; name: string; text: string; questions: Array<{question: string}> }[]} papers
- * @param {{ subjectName?: string; courseName?: string }} meta
+ * Build the user-side message containing papers, syllabus, and notes.
+ * @param {{ papers: Array, syllabus?: Array, notes?: Array, meta?: Object }} data
  */
-export function buildAnalysisUserContent(papers, meta = {}) {
-  const header = [
-    'Analyze the following semester examination papers.',
-    '',
-    `Subject / course (context): ${meta.subjectName || meta.courseName || 'Not specified'}`,
-    `Number of papers provided: ${papers.length}`,
-    '',
-    '=== PAPERS ===',
-  ].join('\n');
+export function buildAnalysisUserContent({ papers = [], syllabus = [], notes = [], meta = {} }) {
+  const sections = [];
 
-  const body = papers
-    .map((paper, i) => {
-      const lines = [
-        `--- PAPER ${i + 1} | name="${paper.name}" | id="${paper.id}" ---`,
-        `Questions detected: ${paper.questions.length}`,
-        '',
-        paper.questions.map((q, qi) => `[${paper.name} / Q${qi + 1}]\n${q.question}`).join('\n\n'),
-      ];
-      return lines.join('\n');
-    })
-    .join('\n\n');
+  sections.push(`Subject / Course Context: ${meta.subjectName || meta.courseName || 'Not specified'}`);
 
-  const schema = `
-=== REQUIRED OUTPUT SCHEMA ===
+  if (syllabus.length > 0) {
+    sections.push('=== SYLLABUS DOCUMENTS ===');
+    syllabus.forEach((doc, i) => {
+      sections.push(`--- SYLLABUS ${i + 1} | name="${doc.name}" ---\n${doc.text}`);
+    });
+  }
+
+  if (notes.length > 0) {
+    sections.push('=== LECTURE NOTES / TEXTBOOK DOCUMENTS ===');
+    notes.forEach((doc, i) => {
+      sections.push(`--- NOTES ${i + 1} | name="${doc.name}" ---\n${doc.text.slice(0, 4000)}`);
+    });
+  }
+
+  if (papers.length > 0) {
+    sections.push('=== PAST EXAMINATION PAPERS (PYQs) ===');
+    papers.forEach((paper, i) => {
+      const yearInfo = paper.year ? ` | year="${paper.year}"` : '';
+      sections.push(`--- PAPER ${i + 1} | name="${paper.name}"${yearInfo} | id="${paper.id}" ---`);
+      sections.push(`Questions detected: ${paper.questions.length}`);
+      sections.push(paper.questions.map((q, qi) => `[${paper.name} / Q${qi + 1}]\n${q.question}`).join('\n\n'));
+    });
+  }
+
+  const schemaInstruction = `
+=== REQUIRED JSON OUTPUT SCHEMA ===
 {
+  "syllabusUnits": [
+    {
+      "unitNumber": 1,
+      "unitName": "Unit / Module Name",
+      "topics": ["Topic A", "Topic B"],
+      "weightage": "15 Marks" or null
+    }
+  ],
+  "prerequisites": [
+    {
+      "topic": "Topic B",
+      "prerequisiteTopic": "Topic A",
+      "reason": "Topic B builds directly upon Topic A principles"
+    }
+  ],
   "topics": [
     {
-      "name": "short topic/concept name",
-      "frequency": <number of papers in which this topic appears>,
-      "totalPapers": <total number of papers provided>,
-      "papers": ["exact paper names (from the name=" fields above)"],
+      "name": "Topic Name",
+      "unitName": "Unit 1" or null,
+      "frequency": <number of papers where this topic appears>,
+      "totalPapers": ${papers.length},
+      "papers": ["exact paper names"],
       "importance": "high" | "medium" | "low",
-      "questionPatterns": ["short descriptions of recurring question types for this topic"],
-      "reason": "one or two sentences explaining why this is important based on the evidence"
+      "questionPatterns": ["recurring pattern summary"],
+      "reason": "evidence-backed reason"
     }
   ],
   "questionPatterns": [
     {
-      "pattern": "description of the repeated question pattern",
-      "frequency": <number of times / papers this pattern appears>,
-      "examples": ["quoted question text pulled from the papers above"]
+      "pattern": "Description of pattern",
+      "type": "theory" | "numerical" | "derivation" | "diagram" | "other",
+      "frequency": <number of papers>,
+      "examples": ["quoted question text"]
+    }
+  ],
+  "yearTrends": [
+    {
+      "topic": "Topic Name",
+      "yearlyCounts": { "2022": 1, "2023": 2, "Unknown": 0 }
+    }
+  ],
+  "questionTypes": [
+    {
+      "type": "theory",
+      "count": 5,
+      "percentage": 50.0
+    }
+  ],
+  "crossDocumentMatrix": [
+    {
+      "topic": "Topic Name",
+      "unitName": "Unit 1" or null,
+      "pyqFrequency": <number of papers>,
+      "totalPapers": ${papers.length},
+      "notesCovered": true or false,
+      "notesSources": [{ "documentName": "Notes.pdf", "pageNumber": 1 }],
+      "status": "high-priority" | "gap" | "covered" | "low-yield"
     }
   ],
   "preparationOrder": [
     {
-      "topic": "topic name (should reference entries in topics)",
-      "priority": <1 = study first, higher = later>,
-      "reason": "clear explanation of why this priority"
+      "topic": "Topic Name",
+      "priority": 1,
+      "reason": "Clear explanation based on exam frequency and syllabus positioning"
     }
   ]
 }
-
-Rules for the output:
-- "frequency" and "totalPapers" must be integers. Every topic's "papers" list must contain only names exactly as given in the name=" fields.
-- "importance": high = appears in most papers and is likely core; medium = recurring but moderate; low = occasional.
-- preparationOrder must rank topics from highest to lowest priority (priority 1 first).
-- Return real counts based on the evidence. If a topic appears in all papers, frequency == totalPapers.
-- Always include at least the strongest 3 topics and up to ~10.
 `;
 
-  return `${header}\n\n${body}\n\n${schema}`;
+  return `${sections.join('\n\n')}\n\n${schemaInstruction}`;
 }

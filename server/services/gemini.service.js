@@ -70,7 +70,9 @@ async function generateStructuredWithFallback(genAI, primaryModelName, contents,
   throw lastError;
 }
 
-export async function analyzeWithGemini(papers, meta = {}) {
+export async function analyzeWithGemini(data, meta = {}) {
+  const payload = Array.isArray(data) ? { papers: data, meta } : { ...data, meta };
+
   if (!config.geminiApiKey) {
     throw new AppError('GEMINI_API_KEY is not configured on the server.', 500);
   }
@@ -80,12 +82,38 @@ export async function analyzeWithGemini(papers, meta = {}) {
   const responseSchema = {
     type: 'object',
     properties: {
+      syllabusUnits: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            unitNumber: { type: 'integer' },
+            unitName: { type: 'string' },
+            topics: { type: 'array', items: { type: 'string' } },
+            weightage: { type: 'string', nullable: true },
+          },
+          required: ['unitNumber', 'unitName', 'topics'],
+        },
+      },
+      prerequisites: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            topic: { type: 'string' },
+            prerequisiteTopic: { type: 'string' },
+            reason: { type: 'string' },
+          },
+          required: ['topic', 'prerequisiteTopic', 'reason'],
+        },
+      },
       topics: {
         type: 'array',
         items: {
           type: 'object',
           properties: {
             name: { type: 'string' },
+            unitName: { type: 'string', nullable: true },
             frequency: { type: 'integer' },
             totalPapers: { type: 'integer' },
             papers: { type: 'array', items: { type: 'string' } },
@@ -102,10 +130,60 @@ export async function analyzeWithGemini(papers, meta = {}) {
           type: 'object',
           properties: {
             pattern: { type: 'string' },
+            type: { type: 'string', enum: ['theory', 'numerical', 'derivation', 'diagram', 'other'] },
             frequency: { type: 'integer' },
             examples: { type: 'array', items: { type: 'string' } },
           },
-          required: ['pattern', 'frequency', 'examples'],
+          required: ['pattern', 'type', 'frequency', 'examples'],
+        },
+      },
+      yearTrends: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            topic: { type: 'string' },
+            yearlyCounts: { type: 'object' },
+          },
+          required: ['topic', 'yearlyCounts'],
+        },
+      },
+      questionTypes: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            type: { type: 'string', enum: ['theory', 'numerical', 'derivation', 'diagram', 'other'] },
+            count: { type: 'integer' },
+            percentage: { type: 'number' },
+          },
+          required: ['type', 'count', 'percentage'],
+        },
+      },
+      crossDocumentMatrix: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            topic: { type: 'string' },
+            unitName: { type: 'string', nullable: true },
+            pyqFrequency: { type: 'integer' },
+            totalPapers: { type: 'integer' },
+            notesCovered: { type: 'boolean' },
+            notesSources: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  documentName: { type: 'string' },
+                  pageNumber: { type: 'integer' },
+                },
+                required: ['documentName', 'pageNumber'],
+              },
+            },
+            status: { type: 'string', enum: ['high-priority', 'gap', 'covered', 'low-yield'] },
+          },
+          required: ['topic', 'pyqFrequency', 'totalPapers', 'notesCovered', 'status'],
         },
       },
       preparationOrder: {
@@ -124,7 +202,7 @@ export async function analyzeWithGemini(papers, meta = {}) {
     required: ['topics', 'questionPatterns', 'preparationOrder'],
   };
 
-  const userContent = buildAnalysisUserContent(papers, meta);
+  const userContent = buildAnalysisUserContent(payload);
 
   const text = await generateStructuredWithFallback(
     genAI,

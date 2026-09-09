@@ -32,7 +32,7 @@ export const upload = multer({
   },
 });
 
-export const uploadPapers = upload.array('papers', config.maxFiles);
+export const uploadPapers = upload.any();
 
 export const getMaxFiles = () => config.maxFiles;
 export const getMaxFileSizeMb = () => config.maxFileSizeMb;

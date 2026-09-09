@@ -1,29 +1,30 @@
 # SmartPrep 🎓
 
-SmartPrep is an AI-powered academic exam preparation and document intelligence platform. It enables students to upload academic course materials—including syllabus documents, lecture notes, textbooks, and past year question papers (PYQs)—and interact with them through grounded AI chat and automated exam topic analysis.
+SmartPrep is an AI-powered academic exam preparation and document intelligence platform. It enables students to upload academic course materials—including syllabus documents, lecture notes, textbooks, and past year question papers (PYQs)—and interact with them through grounded AI chat, automated syllabus breakdown, and cross-document exam topic intelligence.
+
+> **Current Status**: **Phase 1** (Core Grounded RAG Chat & Document Pipeline) and **Phase 2** (Syllabus Analyzer, Advanced PYQ Trends & Cross-Document Intelligence) are fully implemented; Phase 3 is planned for future development.
 
 ---
 
 ## 🌟 Features
 
-### 1. Document Intelligence & Processing
-- **Multi-Format Support**: Upload academic documents in PDF, DOCX, TXT, and Markdown formats.
-- **Page-Aware Text Extraction**: Extracts text along with page metadata for accurate citation tracing.
-- **Sliding-Window Chunking & Embeddings**: Normalizes text and generates 768-dimensional vector embeddings using Google's `text-embedding-004` model.
-- **Semantic Retrieval**: Performs cosine-similarity search over document chunks to fetch top-$k$ relevant passages.
+### 1. Phase 1 — Core Platform & Grounded RAG
+- **Multi-Format Document Ingestion**: Upload academic documents in PDF, DOCX, TXT, and Markdown formats.
+- **Page-Aware Text Extraction**: Captures raw text alongside page-level metadata for precise source citation tracing.
+- **Sliding-Window Chunking & Vector Embeddings**: Generates 768-dimensional normalized float vectors using Google's `text-embedding-004` model.
+- **Semantic Retrieval**: Cosine-similarity top-$k$ search over vector chunks to fetch relevant passages.
+- **Deterministic Fast-Path Query Router**: Sub-millisecond ($< 0.1\text{ms}$) classifier that bypasses vector retrieval for general questions (e.g. *"hi"*, *"explain arrays"*).
+- **Dual-Mode AI Chat**: Toggle between **General AI Answer** and **Answer from My Documents (RAG)**.
+- **Real SSE Streaming**: Low-latency Server-Sent Events streaming powered by `gemini-2.5-flash`.
+- **Source Citations**: Page-specific inline citations (`📄 Computer Networks.pdf (Page 42)`) and expandable source cards.
+- **Multi-Turn Context**: Preserves dialogue threads in database storage across follow-up queries.
 
-### 2. Dual-Mode AI Chat & Fast-Path Routing
-- **Deterministic Fast-Path Router**: Evaluates incoming user queries in $< 0.1\text{ms}$ (0 API calls) to distinguish general conversational queries from document-specific ones.
-- **General AI Mode**: Direct streaming responses for general academic queries (e.g., *"Explain arrays"* or *"hi"*) without vector database lookup latency.
-- **Document-Grounded RAG Mode**: RAG pipeline triggered when queries reference uploaded materials. Synthesizes answers using retrieved chunks with page-specific citations and expandable source cards.
-- **Real-Time SSE Streaming**: Low-latency Server-Sent Events (SSE) streaming powered by `gemini-2.5-flash`.
-- **Rich Markdown Support**: Renders headings, tables, bullet lists, inline math, and code blocks with a one-click copy button.
-- **Multi-Turn Context**: Stores conversation threads and message history for contextual follow-up questions.
-
-### 3. Exam & PYQ Analysis (Phase 2)
-- **Question Extraction**: Automatically splits uploaded past papers into individual exam questions.
-- **Topic & Pattern Recognition**: Groups recurring questions, identifies topic frequency, unit distribution, year-wise trends, and question-type patterns.
-- **Preparation Priority**: Computes recommended topic learning order based on frequency and syllabus coverage.
+### 2. Phase 2 — Academic Intelligence & Multi-Document Analysis
+- **Syllabus Analyzer**: Extracts curriculum units/modules, topic trees, non-guessed weightage tags, and conceptual prerequisites.
+- **Advanced PYQ Analyzer**: Splits question papers into individual questions, identifies recurring topics, calculates historical paper frequency ($N/M$ papers), extracts exam year trends (`2022`, `2023`, `2024`), and classifies question types (*Theory*, *Numerical*, *Derivation*, *Diagram*).
+- **Cross-Document Intelligence**: Combines evidence across **Syllabus + PYQs + Lecture Notes** to construct a topic coverage vs exam priority matrix (`notesCovered = true` only when topic is found in uploaded notes).
+- **Preparation Roadmap**: Generates evidence-backed preparation order rankings (1 to $N$) with reasons.
+- **Analysis Persistence**: Stores completed analysis runs in MySQL / JSON storage.
 
 ---
 
@@ -33,22 +34,24 @@ SmartPrep is an AI-powered academic exam preparation and document intelligence p
 - **Frontend**: React 18, TypeScript, Vite, Custom CSS / Tailwind, Axios, React Markdown, Remark GFM, Lucide React.
 - **Backend**: Node.js (>=18), Express.js, Multer, PDF Parse, Mammoth, Zod.
 - **AI Models**: Google Gemini API (`@google/generative-ai`) using `gemini-2.5-flash` for generation and `text-embedding-004` for vector embeddings.
-- **Database**: Dual-engine architecture supporting MySQL 8+ connection pooling (`mysql2`) with automatic schema initialization, and a resilient local JSON database fallback (`db.json`) when MySQL is offline.
+- **Database**: Dual-engine architecture supporting MySQL 8+ connection pooling (`mysql2`) and a resilient local JSON fallback (`db.json`).
 
 ### System Architecture
 ```text
-Frontend (React + Vite)
+Frontend (React 18 + TypeScript + Vite)
    │  ▲ (SSE Stream / REST)
    ▼  │
 Backend (Express Server)
    ├── Fast-Path Router (General vs RAG vs Analysis)
    ├── Extractor & Chunker (PDF / DOCX / TXT)
    ├── Vector Embedding Service (text-embedding-004)
-   └── Gemini AI Generation Service (gemini-2.5-flash)
+   ├── Gemini AI Generation Service (gemini-2.5-flash)
+   └── Analysis Engine (Syllabus, PYQ Trends & Cross-Document Matrix)
    │
 Database (MySQL Pool / Local JSON Fallback)
    ├── documents & document_chunks
-   └── conversations & messages
+   ├── conversations & messages
+   └── analysis_results
 ```
 
 ---
@@ -60,12 +63,11 @@ SmartPrep/
 ├── frontend/                # React + TypeScript Vite frontend
 │   ├── src/
 │   │   ├── api/             # Axios REST & SSE streaming API client
-│   │   ├── components/      # UI components (Chat, Documents, Upload, Analysis)
+│   │   ├── components/      # UI components (Chat, SyllabusSection, YearTrendsSection, CrossDocMatrixSection, Upload, Dashboard)
 │   │   ├── types/           # TypeScript interfaces & definitions
 │   │   ├── utils/           # Client-side deterministic router & helpers
 │   │   ├── App.tsx          # Root application view management
-│   │   ├── main.tsx         # React DOM entry point
-│   │   └── styles.css       # Design tokens, themes & layout styles
+│   │   └── main.tsx         # React DOM entry point
 │   └── package.json
 ├── server/                  # Node.js Express backend
 │   ├── config/              # Database connection & schema initializer
@@ -74,10 +76,9 @@ SmartPrep/
 │   ├── middleware/          # Multer file upload handling
 │   ├── prompts/             # Gemini structured prompt templates
 │   ├── routes/              # Express API route endpoints
-│   ├── schemas/             # Zod validation schemas
-│   ├── services/            # Extraction, chunking, embeddings, retrieval & RAG services
+│   ├── schemas/             # Zod validation schemas for Phase 1 & 2
+│   ├── services/            # Extraction, chunking, embeddings, retrieval, RAG & analysis services
 │   ├── test/                # Fast-path & RAG integration test suites
-│   ├── utils/               # Custom error handlers
 │   ├── server.js            # Server entry point
 │   └── package.json
 ├── samples/                 # Sample question papers for testing
@@ -142,15 +143,14 @@ The frontend application will run on `http://localhost:5173`.
 
 ## 🧪 Running Tests
 
-To verify the fast-path query router and end-to-end RAG stream:
+To verify fast-path query routing and SSE streaming:
 ```bash
 cd server
 node test/router.test.js
-node test/rag.test.js
 ```
 
 ---
 
 ## 📌 Current Status
 
-SmartPrep is an active open-source project. The current repository reflects the complete implementation of **Phase 1** (Core Document Intelligence & Grounded RAG Chat) and **Phase 2** (Past Paper Question Analysis & Syllabus Prioritization).
+Phase 1 and Phase 2 are implemented; Phase 3 is planned for future development.

@@ -13,20 +13,34 @@ const client = axios.create({
 });
 
 export interface UploadAnalysisParams {
-  files: File[];
+  files?: File[];
+  pyqFiles?: File[];
+  syllabusFiles?: File[];
+  notesFiles?: File[];
   subjectName: string;
   courseName: string;
   onProgress?: (phase: 'uploading' | 'processing' | 'analyzing') => void;
 }
 
 export async function uploadAndAnalyze({
-  files,
+  files = [],
+  pyqFiles = [],
+  syllabusFiles = [],
+  notesFiles = [],
   subjectName,
   courseName,
   onProgress,
 }: UploadAnalysisParams): Promise<AnalysisResult> {
   const formData = new FormData();
-  files.forEach((file) => formData.append('papers', file));
+  
+  if (pyqFiles.length > 0 || syllabusFiles.length > 0 || notesFiles.length > 0) {
+    pyqFiles.forEach((file) => formData.append('pyqFiles', file));
+    syllabusFiles.forEach((file) => formData.append('syllabusFiles', file));
+    notesFiles.forEach((file) => formData.append('notesFiles', file));
+  } else {
+    files.forEach((file) => formData.append('papers', file));
+  }
+
   if (subjectName) formData.append('subjectName', subjectName);
   if (courseName) formData.append('courseName', courseName);
 

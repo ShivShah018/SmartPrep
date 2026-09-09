@@ -22,7 +22,16 @@ export const analyzePapers = [
       courseName: req.body.courseName || '',
     };
 
-    const result = await runAnalysis(req.files, meta);
+    const pyqFiles = (req.files || []).filter(f => f.fieldname === 'pyqFiles' || f.fieldname === 'papers');
+    const syllabusFiles = (req.files || []).filter(f => f.fieldname === 'syllabusFiles');
+    const notesFiles = (req.files || []).filter(f => f.fieldname === 'notesFiles');
+
+    // Fallback if fieldnames are plain 'files' or unspecified
+    const filesToAnalyze = (pyqFiles.length > 0 || syllabusFiles.length > 0 || notesFiles.length > 0)
+      ? { pyqFiles, syllabusFiles, notesFiles }
+      : req.files;
+
+    const result = await runAnalysis(filesToAnalyze, meta);
 
     res.json({
       success: true,

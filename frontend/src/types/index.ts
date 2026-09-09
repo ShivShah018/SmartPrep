@@ -1,7 +1,42 @@
 export type Importance = 'high' | 'medium' | 'low';
 
+export interface SyllabusUnit {
+  unitNumber: number;
+  unitName: string;
+  topics: string[];
+  weightage: string | null;
+}
+
+export interface PrerequisiteItem {
+  topic: string;
+  prerequisiteTopic: string;
+  reason: string;
+}
+
+export interface YearTrendItem {
+  topic: string;
+  yearlyCounts: Record<string, number>;
+}
+
+export interface QuestionTypeItem {
+  type: 'theory' | 'numerical' | 'derivation' | 'diagram' | 'other';
+  count: number;
+  percentage: number;
+}
+
+export interface CrossDocumentMatrixItem {
+  topic: string;
+  unitName: string | null;
+  pyqFrequency: number;
+  totalPapers: number;
+  notesCovered: boolean;
+  notesSources: Array<{ documentName: string; pageNumber: number }>;
+  status: 'high-priority' | 'gap' | 'covered' | 'low-yield';
+}
+
 export interface Topic {
   name: string;
+  unitName?: string | null;
   frequency: number;
   totalPapers: number;
   papers: string[];
@@ -12,6 +47,7 @@ export interface Topic {
 
 export interface QuestionPattern {
   pattern: string;
+  type?: 'theory' | 'numerical' | 'derivation' | 'diagram' | 'other';
   frequency: number;
   examples: string[];
 }
@@ -27,6 +63,7 @@ export interface PaperStatus {
   name: string;
   status: 'ok' | 'failed';
   error: string | null;
+  year?: string | null;
   questions: Array<{ question: string }>;
 }
 
@@ -34,16 +71,24 @@ export interface AnalysisSummary {
   papersUploaded: number;
   papersAnalyzed: number;
   papersFailed: number;
+  syllabusDocsCount?: number;
+  notesDocsCount?: number;
   questionsDetected: number;
   topicsDetected: number;
   repeatedPatternsDetected: number;
+  unitsDetected?: number;
 }
 
 export interface AnalysisResult {
   summary: AnalysisSummary;
   papers: PaperStatus[];
+  syllabusUnits?: SyllabusUnit[];
+  prerequisites?: PrerequisiteItem[];
   topics: Topic[];
   questionPatterns: QuestionPattern[];
+  yearTrends?: YearTrendItem[];
+  questionTypes?: QuestionTypeItem[];
+  crossDocumentMatrix?: CrossDocumentMatrixItem[];
   preparationOrder: PreparationOrderItem[];
 }
 

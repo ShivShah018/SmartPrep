@@ -116,6 +116,15 @@ export async function initDatabase() {
       );
     `);
 
+    await mysqlPool.query(`
+      CREATE TABLE IF NOT EXISTS analysis_results (
+        id VARCHAR(64) PRIMARY KEY,
+        user_id VARCHAR(64) DEFAULT 'default-user',
+        result_json JSON NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     isMysqlActive = true;
     console.log('✅ Connected to MySQL database successfully.');
   } catch (err) {
@@ -127,6 +136,34 @@ export async function initDatabase() {
 // Unified Database Access Layer
 export const db = {
   isMysql: () => isMysqlActive,
+
+  // Analysis Results Persistence
+  async saveAnalysisResult(res, userId = 'default-user') {
+    if (!fallbackDb.analysis_results) fallbackDb.analysis_results = [];
+    if (isMysqlActive) {
+      await mysqlPool.query(
+        `INSERT INTO analysis_results (id, user_id, result_json) VALUES (?, ?, ?)`,
+        [res.id, userId, JSON.stringify(res)]
+      );
+    } else {
+      fallbackDb.analysis_results.unshift({
+        id: res.id,
+        user_id: userId,
+        result_json: res,
+        created_at: new Date().toISOString(),
+      });
+      saveFallbackDb();
+    }
+  },
+
+  async getAnalysisResults(userId = 'default-user') {
+    if (!fallbackDb.analysis_results) fallbackDb.analysis_results = [];
+    if (isMysqlActive) {
+      const [rows] = await mysqlPool.query(`SELECT * FROM analysis_results WHERE user_id = ? ORDER BY created_at DESC`, [userId]);
+      return rows.map(r => typeof r.result_json === 'string' ? JSON.parse(r.result_json) : r.result_json);
+    }
+    return fallbackDb.analysis_results.filter(a => a.user_id === userId).map(a => a.result_json);
+  },
 
   // Documents
   async saveDocument(doc) {

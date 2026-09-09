@@ -193,16 +193,22 @@ export default function App() {
     });
   };
 
-  // Past paper analysis (preserved)
-  const handleAnalyze = async (files: File[], subjectName: string, courseName: string) => {
+  // Phase 2 Academic Intelligence & Past Paper Analysis
+  const handleAnalyze = async (
+    dataInput: { pyqFiles?: File[]; syllabusFiles?: File[]; notesFiles?: File[]; files?: File[] } | File[],
+    subjectName: string,
+    courseName: string
+  ) => {
     setAnalysisError(null);
     setAnalysisResult(null);
     setAnalysisPhase('uploading');
     try {
+      const payload = Array.isArray(dataInput)
+        ? { files: dataInput, subjectName, courseName }
+        : { ...dataInput, subjectName, courseName };
+
       const data = await uploadAndAnalyze({
-        files,
-        subjectName,
-        courseName,
+        ...payload,
         onProgress: (p) => setAnalysisPhase(p),
       });
       setAnalysisResult(data);
