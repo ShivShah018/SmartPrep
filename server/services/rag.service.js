@@ -4,10 +4,10 @@ import { retrieveRelevantChunks } from './retrieval.service.js';
 import { classifyQuery } from './router.service.js';
 
 function extractModelName(model) {
-  return model ? model.split('/').pop() : 'gemini-3.6-flash';
+  return model ? model.split('/').pop() : 'gemini-3.5-flash-lite';
 }
 
-const FALLBACK_MODELS = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash-lite'];
+const FALLBACK_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash'];
 
 async function generateWithFallbackStream(genAI, primaryModel, contents, onChunk) {
   const primaryName = extractModelName(primaryModel);

@@ -28,10 +28,10 @@ function parseJson(text) {
 }
 
 function extractModelName(model) {
-  return model ? model.split('/').pop() : 'gemini-3.6-flash';
+  return model ? model.split('/').pop() : 'gemini-3.5-flash-lite';
 }
 
-const FALLBACK_MODELS = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash-lite'];
+const FALLBACK_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.6-flash'];
 
 async function generateStructuredWithFallback(genAI, primaryModelName, contents, schema) {
   const primary = extractModelName(primaryModelName);
