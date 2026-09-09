@@ -25,6 +25,7 @@ SmartPrep is an AI-powered academic exam preparation and document intelligence p
 - **Cross-Document Intelligence**: Combines evidence across **Syllabus + PYQs + Lecture Notes** to construct a topic coverage vs exam priority matrix (`notesCovered = true` only when topic is found in uploaded notes).
 - **Preparation Roadmap**: Generates evidence-backed preparation order rankings (1 to $N$) with reasons.
 - **Analysis Persistence**: Stores completed analysis runs in MySQL / JSON storage.
+- **Warm Paper Aesthetic & Focus Ambience**: Polished study-friendly UI design with built-in ambient sound player (White/Brown noise, Rain, Soft Café) for calm, focused study sessions.
 
 ---
 

@@ -4,6 +4,7 @@ import ChatView from './components/ChatView';
 import DocumentsView from './components/DocumentsView';
 import DashboardView from './components/DashboardView';
 import UploadView from './components/UploadView';
+import FocusAudioPlayer from './components/FocusAudioPlayer';
 import { classifyQueryClient } from './utils/router';
 import {
   fetchDocuments,
@@ -271,6 +272,8 @@ export default function App() {
           </div>
         )}
       </main>
+
+      <FocusAudioPlayer />
     </div>
   );
 }
