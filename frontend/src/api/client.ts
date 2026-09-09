@@ -12,6 +12,16 @@ const client = axios.create({
   timeout: 180000,
 });
 
+client.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (axios.isAxiosError(error) && error.response?.data?.error?.message) {
+      return Promise.reject(new Error(error.response.data.error.message));
+    }
+    return Promise.reject(error);
+  }
+);
+
 export interface UploadAnalysisParams {
   files?: File[];
   pyqFiles?: File[];

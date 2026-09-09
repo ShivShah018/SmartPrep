@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import TypewriterStatus from './TypewriterStatus';
 import type { AnalysisPhase } from '../types';
 
-const ACCEPTED = '.pdf,.docx,.txt';
+const ACCEPTED = '.pdf,.docx,.txt,.md';
 
 interface CategorizedFiles {
   pyqFiles: File[];
@@ -44,7 +44,7 @@ export default function UploadView({ phase, error, onAnalyze, onReset }: Props) 
     if (!list) return [];
     return Array.from(list).filter((f) => {
       const ext = f.name.split('.').pop()?.toLowerCase();
-      return ['pdf', 'docx', 'txt'].includes(ext || '');
+      return ['pdf', 'docx', 'txt', 'md'].includes(ext || '');
     });
   };
 
