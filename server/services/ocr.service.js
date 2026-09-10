@@ -21,6 +21,7 @@ Instructions:
 
 /**
  * Scans a PDF buffer and extracts raw embedded JPEG image buffers.
+ * Filters out small logos and scanner watermarks (< 15KB).
  */
 export function extractJpegsFromPdfBuffer(buffer) {
   const jpegs = [];
@@ -33,7 +34,7 @@ export function extractJpegsFromPdfBuffer(buffer) {
         if (buffer[i] === 0xFF && buffer[i + 1] === 0xD9) {
           const end = i + 2;
           const jpegBuffer = buffer.subarray(start, end);
-          if (jpegBuffer.length > 1024) { // Filter out tiny icons/thumbnails
+          if (jpegBuffer.length > 15000) { // Filter out small icons/watermarks (<15KB)
             jpegs.push(jpegBuffer);
           }
           i = end;
@@ -66,7 +67,7 @@ export async function transcribePageImage(imageBuffer, mimeType = 'image/jpeg') 
     },
   };
 
-  const primary = config.geminiModel ? config.geminiModel.split('/').pop() : 'gemini-3.6-flash';
+  const primary = config.geminiModel ? config.geminiModel.split('/').pop() : 'gemini-3.5-flash-lite';
   const modelsToTry = [primary, ...FALLBACK_MODELS.filter((m) => m !== primary)];
   let lastErr = null;
 
@@ -96,11 +97,17 @@ export async function transcribePageImage(imageBuffer, mimeType = 'image/jpeg') 
 export async function performVisionOcrForPdf(buffer, filename = 'document.pdf') {
   console.log(`[SmartPrep Vision OCR] Invoking handwritten/scanned PDF fallback for "${filename}"...`);
 
-  let pageImages = extractJpegsFromPdfBuffer(buffer);
+  // 1. Stream-based JPEG extraction (Pure JS, zero DOM/Image dependency)
+  const rawJpegs = extractJpegsFromPdfBuffer(buffer);
+  const pageImageMap = new Map();
 
-  if (pageImages.length === 0) {
+  rawJpegs.forEach((imgBuf, idx) => {
+    pageImageMap.set(idx + 1, imgBuf);
+  });
+
+  // 2. Fallback to PDF.js operator list ONLY if raw stream extraction returned 0 images
+  if (pageImageMap.size === 0) {
     try {
-      const extractedPages = [];
       const renderPage = async function(pageData) {
         const pageNum = pageData.pageIndex + 1;
         try {
@@ -110,39 +117,46 @@ export async function performVisionOcrForPdf(buffer, filename = 'document.pdf') 
               const imgName = opList.argsArray[i][0];
               if (imgName && pageData.objs.has(imgName)) {
                 const img = pageData.objs.get(imgName);
-                if (img && img.data) {
-                  extractedPages.push({ pageNumber: pageNum, data: Buffer.from(img.data) });
+                if (img && img.data && (img.data.length > 15000 || img.width > 200)) {
+                  if (!pageImageMap.has(pageNum)) {
+                    pageImageMap.set(pageNum, Buffer.from(img.data));
+                  }
                 }
               }
             }
           }
         } catch (e) {
-          // ignore
+          // ignore page error
         }
         return '';
       };
       await pdfParse(buffer, { pagerender: renderPage });
-      pageImages = extractedPages.map((p) => p.data);
     } catch (e) {
       // ignore
     }
   }
 
-  if (pageImages.length === 0) {
-    throw new AppError(`Could not read text from "${filename}": Document appears scanned or image-only without readable page streams. Please upload a clearer scan.`, 422);
+  if (pageImageMap.size === 0) {
+    throw new AppError(`We couldn't read this material clearly. Try uploading a clearer scan or higher-quality PDF.`, 422);
   }
 
   const pages = [];
-  for (let i = 0; i < pageImages.length; i++) {
-    const pageNum = i + 1;
+  const sortedEntries = Array.from(pageImageMap.entries()).sort((a, b) => a[0] - b[0]);
+
+  for (const [pageNum, imgBuf] of sortedEntries) {
     try {
-      const transcribedText = await transcribePageImage(pageImages[i]);
-      if (transcribedText) {
+      const transcribedText = await transcribePageImage(imgBuf);
+      const cleanText = transcribedText.replace(/\[unclear\]/gi, '').trim();
+
+      // Only accept page if it contains actual readable transcription (not just "[unclear]")
+      if (cleanText.length >= 10) {
         pages.push({
           pageNumber: pageNum,
           text: transcribedText,
           extractionMethod: 'vision',
         });
+      } else {
+        console.warn(`[SmartPrep Vision OCR] Page ${pageNum} of "${filename}" returned insufficient readable text.`);
       }
     } catch (err) {
       console.warn(`[SmartPrep Vision OCR] Failed page ${pageNum} of "${filename}":`, err.message);
@@ -150,7 +164,7 @@ export async function performVisionOcrForPdf(buffer, filename = 'document.pdf') 
   }
 
   if (pages.length === 0) {
-    throw new AppError(`Could not read scanned text from "${filename}". Please upload a clearer scan or higher-quality document.`, 422);
+    throw new AppError(`We couldn't read this material clearly. Try uploading a clearer scan or higher-quality PDF.`, 422);
   }
 
   return pages;

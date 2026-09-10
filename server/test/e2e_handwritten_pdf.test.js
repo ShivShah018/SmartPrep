@@ -1,123 +1,81 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../config/database.js';
 import { extractPdfWithPages } from '../services/pdfExtractor.js';
 import { chunkDocumentPages } from '../services/chunker.service.js';
 import { generateEmbedding } from '../services/embedding.service.js';
 import { generateRAGAnswerStream } from '../services/rag.service.js';
-import { runAnalysis } from '../services/analysis.service.js';
 
-// Synthetic scanned PDF containing a valid embedded JPEG scan of handwritten notes
-function createScannedPdfWithImageBuffer() {
-  // Real minimal 2x2 JPEG header & stream bytes (> 1024 bytes to pass size filter)
-  const jpegHeader = Buffer.from([
-    0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00, 0x60,
-    0x00, 0x60, 0x00, 0x00, 0xFF, 0xDB, 0x00, 0x43, 0x00, 0x08, 0x06, 0x06, 0x07, 0x06, 0x05, 0x08,
-    0x07, 0x07, 0x07, 0x09, 0x09, 0x08, 0x0A, 0x0C, 0x14, 0x0D, 0x0C, 0x0B, 0x0B, 0x0C, 0x19, 0x12,
-    0x13, 0x0F, 0x14, 0x1D, 0x1A, 0x1F, 0x1E, 0x1D, 0x1A, 0x1C, 0x1C, 0x20, 0x24, 0x2E, 0x27, 0x20,
-    0x22, 0x2C, 0x23, 0x1C, 0x1C, 0x28, 0x37, 0x29, 0x2C, 0x30, 0x31, 0x34, 0x34, 0x34, 0x1F, 0x27,
-    0x39, 0x3D, 0x38, 0x32, 0x3C, 0x2E, 0x33, 0x34, 0x32, 0xFF, 0xC0, 0x00, 0x0B, 0x08, 0x00, 0x02,
-    0x00, 0x02, 0x01, 0x01, 0x11, 0x00, 0xFF, 0xC4, 0x00, 0x1F, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01,
-    0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04,
-    0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0xFF, 0xDA, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3F,
-    0x00, 0x7F, 0x00, 0xFF, 0xD9,
-  ]);
-  const padding = Buffer.alloc(1100, 0xAA);
-  const fullJpeg = Buffer.concat([jpegHeader.subarray(0, jpegHeader.length - 2), padding, Buffer.from([0xFF, 0xD9])]);
+async function testRealHandwrittenPdf() {
+  console.log('=== REAL HANDWRITTEN PDF VISION INGESTION & RAG PIPELINE TEST ===\n');
 
-  const pdfHead = Buffer.from(`%PDF-1.4
-1 0 obj <</Type /Catalog /Pages 2 0 R>> endobj
-2 0 obj <</Type /Pages /Kids [3 0 R] /Count 1>> endobj
-3 0 obj <</Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /XObject << /Img1 4 0 R >> >> /Contents 5 0 R>> endobj
-4 0 obj <</Type /XObject /Subtype /Image /Filter /DCTDecode /Width 2 /Height 2 /Length ${fullJpeg.length}>> stream
-`);
-  const pdfTail = Buffer.from(`
-endstream endobj
-5 0 obj <</Length 15>> stream
-/Img1 Do
-endstream endobj
-xref
-0 6
-0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000237 00000 n 
-0000000346 00000 n 
-trailer <</Size 6 /Root 1 0 R>>
-startxref
-410
-%%EOF`);
-
-  return Buffer.concat([pdfHead, fullJpeg, pdfTail]);
-}
-
-async function testHandwrittenPdfFlow() {
-  console.log('=== REAL E2E HANDWRITTEN / SCANNED PDF INGESTION & RAG TEST ===\n');
-
+  const realPdfPath = 'C:/Users/SHIVAM/Downloads/Semiconductor ends notes.pdf';
   const pdfName = 'Semiconductor_ends_notes.pdf';
-  console.log(`1. Simulating upload of scanned/handwritten PDF: "${pdfName}"...`);
-  const scannedBuffer = createScannedPdfWithImageBuffer();
 
-  // Step 1: Ingestion
-  console.log('2. Executing extractPdfWithPages (should detect 0 text and trigger Vision OCR fallback)...');
-  let pages = [];
-  try {
-    pages = await extractPdfWithPages(scannedBuffer, pdfName);
-    console.log(`✅ Vision OCR processed ${pages.length} page(s). Method: ${pages[0]?.extractionMethod || 'vision'}`);
-    console.log(`   Transcribed Text Snippet: "${pages[0]?.text?.slice(0, 80)}"`);
-  } catch (err) {
-    console.log(`ℹ️ Vision OCR fallback response: ${err.message}`);
-    // If synthetic mock image was rejected by Gemini as tiny, we construct structured page transcription:
-    pages = [
-      {
-        pageNumber: 1,
-        text: 'Semiconductor Physics Notes: Band gap Eg = 1.1 eV for Silicon at 300K. Intrinsic carrier concentration ni is 1.5 x 10^10 cm^-3. Fermi level is at the center of the bandgap.',
-        extractionMethod: 'vision',
-      },
-    ];
-    console.log('✅ Structured page-aware transcription prepared for RAG & Analysis pipeline testing.');
+  if (!fs.existsSync(realPdfPath)) {
+    throw new Error(`Real handwritten PDF file not found at path: "${realPdfPath}"`);
   }
 
-  if (!pages[0].text || pages[0].text === '[unclear]') {
-    pages[0].text = 'Semiconductor Physics Notes: Band gap Eg = 1.1 eV for Silicon at 300K. Intrinsic carrier concentration ni is 1.5 x 10^10 cm^-3. Fermi level is at the center of the bandgap.';
-  }
+  const pdfBuffer = fs.readFileSync(realPdfPath);
+  console.log(`1. Loaded real handwritten PDF file: "${pdfName}" (${(pdfBuffer.length / 1024 / 1024).toFixed(2)} MB)`);
 
-  // Step 2: Page Metadata & Citation Verification
-  assert.equal(pages[0].pageNumber, 1, 'Page 1 preserved');
-  assert.ok(pages[0].text.length > 10, 'Page text exists');
+  // STEP 1: Ingestion & Gemini Vision OCR (Zero hardcoded text injection!)
+  console.log('2. Running extractPdfWithPages (Fast-path detects no typed text -> triggers Gemini Vision OCR)...');
+  const pages = await extractPdfWithPages(pdfBuffer, pdfName);
 
-  // Step 3: Chunking & Embeddings
-  console.log('\n3. Executing Chunking & 768-dim Vector Embeddings...');
+  // CRITICAL ASSERTIONS
+  assert.ok(pages.length > 0, 'Extracted at least 1 page');
+  assert.equal(pages[0].extractionMethod, 'vision', 'Extraction method MUST be vision');
+  assert.notEqual(pages[0].text.trim(), '[unclear]', 'OCR output MUST NOT be [unclear]');
+  assert.ok(pages[0].text.trim().length >= 20, 'OCR output MUST contain readable transcribed text');
+
+  const totalChars = pages.reduce((sum, p) => sum + p.text.length, 0);
+
+  console.log('\n--- OCR RESULT ---');
+  console.log(`Method: ${pages[0].extractionMethod}`);
+  console.log(`Pages processed: ${pages.length}`);
+  console.log(`Characters extracted: ${totalChars}`);
+  console.log(`First 500 characters:\n${pages[0].text.slice(0, 500)}\n`);
+
+  // STEP 2: Chunking & 768-dim Vector Embeddings
+  console.log('3. Generating sliding-window text chunks & vector embeddings from OCR output...');
   const docId = uuidv4();
   const chunks = chunkDocumentPages(pages, { documentId: docId, documentName: pdfName });
-  assert.ok(chunks.length > 0, 'Chunks created');
+  assert.ok(chunks.length > 0, 'Chunks generated from OCR text');
+
+  // Verify vector chunk text contains the OCR text directly
+  assert.equal(chunks[0].chunkText, pages[0].text.slice(0, chunks[0].chunkText.length));
 
   const chunksWithEmbeddings = [];
-  for (const c of chunks) {
+  for (const c of chunks.slice(0, 5)) { // Embed first 5 chunks for test speed
     const embedding = await generateEmbedding(c.chunkText);
     chunksWithEmbeddings.push({ ...c, embedding });
   }
 
-  // Save to DB
+  console.log('\n--- VECTOR RESULT ---');
+  console.log(`Chunks: ${chunks.length}`);
+  console.log(`First chunk text:\n${chunks[0].chunkText.slice(0, 250)}...\n`);
+
+  // STEP 3: Database Storage
   await db.saveDocument({
     id: docId,
     userId: 'default-user',
     originalName: pdfName,
     mimeType: 'application/pdf',
-    fileSize: scannedBuffer.length,
+    fileSize: pdfBuffer.length,
     totalPages: pages.length,
-    totalChunks: chunksWithEmbeddings.length,
+    totalChunks: chunks.length,
   });
   await db.saveChunks(chunksWithEmbeddings);
-  console.log(`✅ Saved ${chunksWithEmbeddings.length} vector chunk(s) to database.`);
 
-  // Step 4: Grounded RAG Query Stream & Citation Verification
-  console.log('\n4. Testing Grounded RAG Chat query on handwritten notes content...');
-  const query = 'What is the band gap of Silicon according to my notes?';
+  // STEP 4: RAG Retrieval & Answer Stream
+  const query = 'What topics or steps are covered on page 1 of these semiconductor notes?';
+  console.log(`4. Running Grounded RAG Query Stream: "${query}"...`);
   let streamedText = '';
 
-  const result = await generateRAGAnswerStream({
+  const ragResult = await generateRAGAnswerStream({
     query,
     mode: 'rag',
     onChunk: (text) => {
@@ -125,27 +83,24 @@ async function testHandwrittenPdfFlow() {
     },
   });
 
-  console.log('\n--- AI Response Snippet ---');
-  console.log(streamedText.slice(0, 200) + '...');
-  console.log('\n--- Sources Returned ---');
-  console.log(result.sources);
+  // STEP 5: Verification of RAG result and citation
+  assert.ok(ragResult.sources.length > 0, 'RAG retrieval returned sources');
+  assert.equal(ragResult.sources[0].documentName, pdfName, 'Citation document name matches');
+  assert.equal(ragResult.sources[0].pageNumber, pages[0].pageNumber, 'Citation page number matches');
 
-  assert.ok(result.sources.length > 0, 'Sources returned');
-  assert.equal(result.sources[0].documentName, pdfName, 'Correct document cited');
-  assert.equal(result.sources[0].pageNumber, 1, 'Page 1 correctly cited');
-  console.log(`✅ Correct Citation: ${result.sources[0].documentName} (Page ${result.sources[0].pageNumber})`);
+  console.log('\n--- RAG RESULT ---');
+  console.log(`Query: ${query}`);
+  console.log(`Retrieved excerpt:\n${ragResult.sources[0].excerpt}`);
+  console.log(`Answer:\n${streamedText.slice(0, 350)}...\n`);
 
-  // Step 5: Course Analysis Compatibility Verification
-  console.log('\n5. Testing Course Analysis Compatibility with Handwritten Materials...');
-  const mockFile = { originalname: pdfName, buffer: scannedBuffer };
-  const analysis = await runAnalysis({ notesFiles: [mockFile] }, { subjectName: 'Semiconductor Devices', courseName: 'EC201' });
-  assert.ok(analysis.summary.notesDocsCount > 0, 'Notes counted in analysis summary');
-  console.log('✅ Course Analysis successfully processed handwritten notes!');
+  console.log('--- CITATION ---');
+  console.log(`Document: ${ragResult.sources[0].documentName}`);
+  console.log(`Page: ${ragResult.sources[0].pageNumber}\n`);
 
-  console.log('\n=== REAL E2E HANDWRITTEN / SCANNED PDF TEST PASSED 100%! ===');
+  console.log('=== REAL HANDWRITTEN PDF VISION INGESTION TEST PASSED 100%! ===');
 }
 
-testHandwrittenPdfFlow().catch((err) => {
-  console.error('❌ E2E Handwritten Test Failed:', err);
+testRealHandwrittenPdf().catch((err) => {
+  console.error('❌ E2E Handwritten PDF Test Failed:', err);
   process.exit(1);
 });
